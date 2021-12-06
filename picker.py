@@ -5,7 +5,7 @@ import warnings
 import tkinter as tk
 import pyperclip as pc
 
-from tkinter import ttk, filedialog as fd
+from tkinter import ttk, simpledialog, filedialog as fd
 from PIL import Image, ImageTk, ImageGrab
 
 class AutoScrollbar(ttk.Scrollbar):
@@ -289,6 +289,10 @@ class CanvasImage:
         self.canvas.destroy()
         self.__imframe.destroy()
 
+def add_province():
+    """Convenience function to keep dictionary and table synced"""
+    
+
 def choose_color(event):
     global id_index
     global row_index
@@ -296,19 +300,14 @@ def choose_color(event):
     # get rgb value from screen
     rgb = ImageGrab.grab().load()[event.x_root,event.y_root]          # right now this takes a screenshot of the entire screen
     
-    # add color to dictionary
-    colors_dictionary[rgb] = row_index
+    # add color
+    add_color(rgb, row_index)
 
     # change color rectangle
     rgb_label.configure(text=rgb)
     hex_string = '#%02x%02x%02x' % rgb
     color_canvas.configure(bg=hex_string)
 
-    # add color to table
-    tk.Label(colors_frame, text=row_index).grid(row=row_index, column=id_index)
-    tk.Label(colors_frame, text=rgb[0]).grid(row=row_index, column=r_index)
-    tk.Label(colors_frame, text=rgb[1]).grid(row=row_index, column=g_index)
-    tk.Label(colors_frame, text=rgb[2]).grid(row=row_index, column=b_index)
     row_index += 1
 
 def copy_to_clipboard():
@@ -321,12 +320,47 @@ def copy_to_clipboard():
     pc.copy(csv)
 
 def clear_colors():
-     answer = tk.messagebox.askquestion(title="Delete all entries", message="Do you want to delete all entries?")
-     if answer == "yes":
-         for i in range(1, colors_frame.grid_size()[0]):
-             for widget in colors_frame.grid_slaves(row=i):
-                 widget.destroy()
+    answer = tk.messagebox.askquestion(title="Delete entries", message="Do you want to delete all entries?")
+    if answer == "yes":
+        for i in range(1, colors_frame.grid_size()[1]):
+            for widget in colors_frame.grid_slaves(row=i):
+                widget.destroy()
 
+    colors_dictionary.clear()
+
+def add_color(rgb, row):
+    """Adds a color to the table and the dictionary"""
+    colors_dictionary[rgb] = row_index
+
+    tk.Label(colors_frame, text=row_index).grid(row=row_index, column=id_index)
+    tk.Label(colors_frame, text=rgb[0]).grid(row=row_index, column=r_index)
+    tk.Label(colors_frame, text=rgb[1]).grid(row=row_index, column=g_index)
+    tk.Label(colors_frame, text=rgb[2]).grid(row=row_index, column=b_index)
+    tk.Button(colors_frame, text="X", command=lambda: remove_color(row)).grid(row=row_index, column=x_index)
+
+
+def remove_color(row):
+    """Removes a color from the table and the dictionary"""
+    # remove in dictionary
+    
+    rgb = get_color(row)
+    del colors_dictionary[rgb]
+
+    print(colors_dictionary)
+
+    # remove from screen
+    widget_row = colors_frame.grid_slaves(row=row)
+    for widget in widget_row:
+        widget.destroy()
+
+def get_color(row):
+    """Returns a color form the table with the given row"""
+    widget_row = colors_frame.grid_slaves(row=row)
+    widget_row.sort(key= lambda w: w.grid_info()["column"])
+    r = int(widget_row[1].cget("text"))
+    g =int(widget_row[2].cget("text"))
+    b = int(widget_row[3].cget("text"))
+    return (r, g, b)
 
 # initialize window
 root = tk.Tk()
@@ -341,6 +375,9 @@ tools_frame.grid(row=0, column=1)
 
 # open file select dialog
 filename = fd.askopenfilename()
+
+# ask starting id
+row_index = simpledialog.askinteger("Input", "Enter province ID to start at:", parent=root, minvalue=0)
 
 # load image
 canvas_image = CanvasImage(root, filename)
@@ -357,13 +394,12 @@ rgb_label.grid(row=1, column=0)
 colors_frame = tk.Frame(tools_frame)
 colors_frame.grid(row=2, column=0)
 
+# constants for table insertion
 id_index = 0
 r_index = 1
 g_index = 2
 b_index = 3
-
-row_index = 1
-id_index = 0
+x_index = 4
 
 colors_dictionary = {}
 
