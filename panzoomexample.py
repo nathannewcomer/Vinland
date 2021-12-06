@@ -305,12 +305,12 @@ filename = fd.askopenfilename()
 MainWindow(app, path=filename)
 
 # create frames and add widgets to them
-image_frame = tk.Frame(app)
-tools_frame = tk.Frame(app)
-image_frame.pack(side=tk.LEFT)
-tools_frame.pack(side=tk.RIGHT)
+#image_frame = tk.Frame(app)
+#tools_frame = tk.Frame(app)
+#image_frame.pack(side=tk.LEFT)
+#tools_frame.pack(side=tk.RIGHT)
 
-button = tk.Button(tools_frame, text="Bruh Moment")
-button.pack()
+#button = tk.Button(tools_frame, text="Bruh Moment")
+#button.pack()
 
 app.mainloop()
