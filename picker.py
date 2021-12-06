@@ -307,8 +307,8 @@ def choose_color(event):
     # add color to table
     tk.Label(colors_frame, text=row_index).grid(row=row_index, column=id_index)
     tk.Label(colors_frame, text=rgb[0]).grid(row=row_index, column=r_index)
-    tk.Label(colors_frame, text=rgb[1]).grid(row=row_index, column=b_index)
-    tk.Label(colors_frame, text=rgb[2]).grid(row=row_index, column=g_index)
+    tk.Label(colors_frame, text=rgb[1]).grid(row=row_index, column=g_index)
+    tk.Label(colors_frame, text=rgb[2]).grid(row=row_index, column=b_index)
     row_index += 1
 
 def copy_to_clipboard():
@@ -316,9 +316,17 @@ def copy_to_clipboard():
     csv = ""
 
     for key, value in colors_dictionary.items():
-        csv += "{0};{1};{2};{3};x;x;\n".format(value, key[0], key[0], key[1], key[2])
+        csv += "{0};{1};{2};{3};x;x;\n".format(value, key[0], key[1], key[2])
 
     pc.copy(csv)
+
+def clear_colors():
+     answer = tk.messagebox.askquestion(title="Delete all entries", message="Do you want to delete all entries?")
+     if answer == "yes":
+         for i in range(1, colors_frame.grid_size()[0]):
+             for widget in colors_frame.grid_slaves(row=i):
+                 widget.destroy()
+
 
 # initialize window
 root = tk.Tk()
@@ -366,6 +374,9 @@ tk.Label(colors_frame, text="B").grid(row=0,column=b_index)
 
 copy_button = tk.Button(tools_frame, text="Copy as CSV", command=copy_to_clipboard)
 copy_button.grid(row=3, column=0)
+
+delete_button = tk.Button(tools_frame, text="Clear entries", command=clear_colors)
+delete_button.grid(row=4, column=0)
 
 #button1 = tk.Button(tools_frame, text="Hello, World!")
 #button1.grid(row=1,column=0)
