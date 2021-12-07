@@ -1,3 +1,6 @@
+# picker.py
+# A tool to make selecting provinces and adding them to the CSV file quicker and easier
+# Written by Nathan Newcomer
 # AutoScrollBar and CanvasImage classes taken from https://stackoverflow.com/a/48137257
 
 import math
@@ -287,14 +290,10 @@ class CanvasImage:
         del self.__pyramid[:]  # delete pyramid list
         del self.__pyramid  # delete pyramid variable
         self.canvas.destroy()
-        self.__imframe.destroy()
-
-def add_province():
-    """Convenience function to keep dictionary and table synced"""
-    
+        self.__imframe.destroy()    
 
 def choose_color(event):
-    global id_index
+    global ID_INDEX
     global row_index
 
     # get rgb value from screen
@@ -328,18 +327,18 @@ def clear_colors():
 
     colors_dictionary.clear()
 
-def add_color(rgb, row):
+def add_color(rgb: (int, int, int), row: int):
     """Adds a color to the table and the dictionary"""
     colors_dictionary[rgb] = row_index
 
-    tk.Label(colors_frame, text=row_index).grid(row=row_index, column=id_index)
-    tk.Label(colors_frame, text=rgb[0]).grid(row=row_index, column=r_index)
-    tk.Label(colors_frame, text=rgb[1]).grid(row=row_index, column=g_index)
-    tk.Label(colors_frame, text=rgb[2]).grid(row=row_index, column=b_index)
-    tk.Button(colors_frame, text="X", command=lambda: remove_color(row)).grid(row=row_index, column=x_index)
+    tk.Label(colors_frame, text=row_index).grid(row=row_index, column=ID_INDEX)
+    tk.Label(colors_frame, text=rgb[0]).grid(row=row_index, column=R_INDEX)
+    tk.Label(colors_frame, text=rgb[1]).grid(row=row_index, column=G_INDEX)
+    tk.Label(colors_frame, text=rgb[2]).grid(row=row_index, column=B_INDEX)
+    tk.Button(colors_frame, text="X", command=lambda: remove_color(row)).grid(row=row_index, column=X_INDEX)
 
 
-def remove_color(row):
+def remove_color(row: int):
     """Removes a color from the table and the dictionary"""
     # remove in dictionary
     
@@ -353,7 +352,7 @@ def remove_color(row):
     for widget in widget_row:
         widget.destroy()
 
-def get_color(row):
+def get_color(row: int) -> (int, int, int):
     """Returns a color form the table with the given row"""
     widget_row = colors_frame.grid_slaves(row=row)
     widget_row.sort(key= lambda w: w.grid_info()["column"])
@@ -395,18 +394,18 @@ colors_frame = tk.Frame(tools_frame)
 colors_frame.grid(row=2, column=0)
 
 # constants for table insertion
-id_index = 0
-r_index = 1
-g_index = 2
-b_index = 3
-x_index = 4
+ID_INDEX = 0
+R_INDEX = 1
+G_INDEX = 2
+B_INDEX = 3
+X_INDEX = 4
 
 colors_dictionary = {}
 
-tk.Label(colors_frame, text="ID").grid(row=0,column=id_index)
-tk.Label(colors_frame, text="R").grid(row=0,column=r_index)
-tk.Label(colors_frame, text="G").grid(row=0,column=g_index)
-tk.Label(colors_frame, text="B").grid(row=0,column=b_index)
+tk.Label(colors_frame, text="ID").grid(row=0,column=ID_INDEX)
+tk.Label(colors_frame, text="R").grid(row=0,column=R_INDEX)
+tk.Label(colors_frame, text="G").grid(row=0,column=G_INDEX)
+tk.Label(colors_frame, text="B").grid(row=0,column=B_INDEX)
 
 copy_button = tk.Button(tools_frame, text="Copy as CSV", command=copy_to_clipboard)
 copy_button.grid(row=3, column=0)
