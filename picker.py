@@ -322,6 +322,9 @@ def copy_to_clipboard():
 def clear_colors():
     answer = tk.messagebox.askquestion(title="Delete entries", message="Do you want to delete all entries?")
     if answer == "yes":
+    #    rows = colors_frame.grid_size()[1]
+    #    for row in range(1, rows):
+    #        remove_color(row)
         for i in range(1, colors_frame.grid_size()[1]):
             for widget in colors_frame.grid_slaves(row=i):
                 widget.destroy()
@@ -336,7 +339,7 @@ def add_color(rgb, row):
     tk.Label(colors_frame, text=rgb[0]).grid(row=row_index, column=r_index)
     tk.Label(colors_frame, text=rgb[1]).grid(row=row_index, column=g_index)
     tk.Label(colors_frame, text=rgb[2]).grid(row=row_index, column=b_index)
-    tk.Button(colors_frame, text="X", command=lambda: remove_color(row)).grid(row=row_index, column=x_index)
+    tk.Button(colors_frame, text="X", command=lambda: remove_color(row), bg="red").grid(row=row_index, column=x_index)
 
 
 def remove_color(row):
@@ -362,6 +365,10 @@ def get_color(row):
     b = int(widget_row[3].cget("text"))
     return (r, g, b)
 
+def ask_user_for_id():
+    global row_index
+    row_index = simpledialog.askinteger("Input", "Enter province ID to start at:", parent=root, minvalue=0)
+
 # initialize window
 root = tk.Tk()
 root.title("Province Picker")
@@ -377,7 +384,8 @@ tools_frame.grid(row=0, column=1)
 filename = fd.askopenfilename()
 
 # ask starting id
-row_index = simpledialog.askinteger("Input", "Enter province ID to start at:", parent=root, minvalue=0)
+row_index = 1
+ask_user_for_id()
 
 # load image
 canvas_image = CanvasImage(root, filename)
@@ -411,10 +419,10 @@ tk.Label(colors_frame, text="B").grid(row=0,column=b_index)
 copy_button = tk.Button(tools_frame, text="Copy as CSV", command=copy_to_clipboard)
 copy_button.grid(row=3, column=0)
 
-delete_button = tk.Button(tools_frame, text="Clear entries", command=clear_colors)
-delete_button.grid(row=4, column=0)
+id_entry_button = tk.Button(tools_frame, text="Set ID", command=ask_user_for_id)
+id_entry_button.grid(row=4, column=0)
 
-#button1 = tk.Button(tools_frame, text="Hello, World!")
-#button1.grid(row=1,column=0)
+delete_button = tk.Button(tools_frame, text="Clear entries", command=clear_colors)
+delete_button.grid(row=5, column=0)
 
 root.mainloop()
