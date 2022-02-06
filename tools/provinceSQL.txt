@@ -1,0 +1,7 @@
+CREATE TABLE provinces (
+  id INTEGER NOT NULL PRIMARY KEY,
+  red INTEGER NOT NULL,
+  green INTEGER NOT NULL,
+  blue INTEGER NOT NULL,
+  name TEXT
+)

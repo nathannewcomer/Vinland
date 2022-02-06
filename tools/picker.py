@@ -1,12 +1,10 @@
-# picker.py
-# A tool to make selecting provinces and adding them to the CSV file quicker and easier
-# Written by Nathan Newcomer
 # AutoScrollBar and CanvasImage classes taken from https://stackoverflow.com/a/48137257
 
 import math
 import warnings
 import tkinter as tk
 import pyperclip as pc
+import sqlite3
 
 from tkinter import ttk, simpledialog, filedialog as fd
 from PIL import Image, ImageTk, ImageGrab
@@ -290,7 +288,11 @@ class CanvasImage:
         del self.__pyramid[:]  # delete pyramid list
         del self.__pyramid  # delete pyramid variable
         self.canvas.destroy()
-        self.__imframe.destroy()    
+        self.__imframe.destroy()
+
+def add_province():
+    """Convenience function to keep dictionary and table synced"""
+    
 
 def choose_color(event):
     global ID_INDEX
@@ -324,23 +326,23 @@ def clear_colors():
     #    rows = colors_frame.grid_size()[1]
     #    for row in range(1, rows):
     #        remove_color(row)
-        for i in range(1, colors_frame.grid_size()[1]):
-            for widget in colors_frame.grid_slaves(row=i):
+        for i in range(1, colors_list_canvas.grid_size()[1]):
+            for widget in colors_list_canvas.grid_slaves(row=i):
                 widget.destroy()
 
     colors_dictionary.clear()
 
-def add_color(rgb: (int, int, int), row: int):
+def add_color(rgb, row):
     """Adds a color to the table and the dictionary"""
     colors_dictionary[rgb] = row_index
 
-    tk.Label(colors_frame, text=row_index).grid(row=row_index, column=ID_INDEX)
-    tk.Label(colors_frame, text=rgb[0]).grid(row=row_index, column=R_INDEX)
-    tk.Label(colors_frame, text=rgb[1]).grid(row=row_index, column=G_INDEX)
-    tk.Label(colors_frame, text=rgb[2]).grid(row=row_index, column=B_INDEX)
-    tk.Button(colors_frame, text="X", command=lambda: remove_color(row)).grid(row=row_index, column=X_INDEX)
+    tk.Label(colors_list_frame, text=row_index).grid(row=row_index, column=ID_INDEX)
+    tk.Label(colors_list_frame, text=rgb[0]).grid(row=row_index, column=R_INDEX)
+    tk.Label(colors_list_frame, text=rgb[1]).grid(row=row_index, column=G_INDEX)
+    tk.Label(colors_list_frame, text=rgb[2]).grid(row=row_index, column=B_INDEX)
+    tk.Button(colors_list_frame, text="X", command=lambda: remove_color(row), bg="red").grid(row=row_index, column=X_INDEX)
 
-def remove_color(row: int):
+def remove_color(row):
     """Removes a color from the table and the dictionary"""
     # remove in dictionary
     
@@ -350,22 +352,34 @@ def remove_color(row: int):
     print(colors_dictionary)
 
     # remove from screen
-    widget_row = colors_frame.grid_slaves(row=row)
+    widget_row = colors_list_canvas.grid_slaves(row=row)
     for widget in widget_row:
         widget.destroy()
 
-def get_color(row: int) -> (int, int, int):
-    """Returns a color form the table with the given row"""
-    widget_row = colors_frame.grid_slaves(row=row)
+def get_color(row):
+    """Returns a color from the table with the given row"""
+    widget_row = colors_list_frame.grid_slaves(row=row)
     widget_row.sort(key= lambda w: w.grid_info()["column"])
     r = int(widget_row[1].cget("text"))
     g =int(widget_row[2].cget("text"))
     b = int(widget_row[3].cget("text"))
     return (r, g, b)
 
-def ask_user_for_id():
+def get_initial_id():
     global row_index
-    row_index = simpledialog.askinteger("Input", "Enter province ID to start at:", parent=root, minvalue=0)
+
+    sql = "SELECT MAX(id) FROM provinces"
+    max_id = connection.execute(sql).fetchone()
+    if isinstance(max_id[0], int):
+        row_index = max_id[0] + 1
+
+def get_data():
+    sql = "SELECT * FROM provinces"
+    rows = connection.execute(sql)
+
+def on_closing():
+    connection.close()
+    root.destroy()
 
 # initialize window
 root = tk.Tk()
@@ -373,6 +387,14 @@ root.title("Province Picker")
 root.geometry("1280x720")
 root.rowconfigure(0, weight=1)  # make the CanvasImage widget expandable
 root.columnconfigure(0, weight=1)
+root.protocol("WM_DELETE_WINDOW", on_closing)
+
+# open sqlite connection
+connection = sqlite3.connect("ck3.db")
+cursor = connection.cursor()
+
+# pull data from table
+get_data()
 
 # tool frame
 tools_frame = tk.Frame(root)
@@ -383,7 +405,7 @@ filename = fd.askopenfilename()
 
 # ask starting id
 row_index = 1
-ask_user_for_id()
+get_initial_id()
 
 # load image
 canvas_image = CanvasImage(root, filename)
@@ -397,8 +419,28 @@ rgb_label = tk.Label(tools_frame, text="0 0 0")
 rgb_label.grid(row=1, column=0)
 
 # create table to hold/display rgb values
-colors_frame = tk.Frame(tools_frame)
-colors_frame.grid(row=2, column=0)
+#colors_container_canvas = tk.Canvas(tools_frame)
+#colors_container_canvas.grid(row=2, column=0)
+
+# https://www.youtube.com/watch?v=0WafQCaok6g
+
+# canvas to hold list of colors
+colors_list_canvas = tk.Canvas(tools_frame)
+colors_list_canvas.grid(row=2, column=0)
+
+# scrollbar for colors frame
+colors_scroll = tk.Scrollbar(tools_frame, orient="vertical", command=colors_list_canvas.yview)
+colors_scroll.grid(row=2, column=1, sticky="ns")
+
+# allow colors list canvas to be scrolled
+colors_list_canvas.configure(yscrollcommand=colors_scroll.set)
+colors_list_canvas.bind("<Configure>", lambda e: colors_list_canvas.configure(scrollregion = colors_list_canvas.bbox("all")))
+
+colors_list_frame = tk.Frame(colors_list_canvas)
+colors_list_canvas.create_window((0, 0), window = colors_list_frame, anchor="nw")
+
+#for i in range(20):
+#    tk.Label(colors_list_frame, text="hello").grid(row=i, column=0)
 
 # constants for table insertion
 ID_INDEX = 0
@@ -409,18 +451,21 @@ X_INDEX = 4
 
 colors_dictionary = {}
 
-tk.Label(colors_frame, text="ID").grid(row=0,column=ID_INDEX)
-tk.Label(colors_frame, text="R").grid(row=0,column=R_INDEX)
-tk.Label(colors_frame, text="G").grid(row=0,column=G_INDEX)
-tk.Label(colors_frame, text="B").grid(row=0,column=B_INDEX)
+#tk.Label(colors_list_canvas, text="ID").grid(row=0,column=ID_INDEX)
+#tk.Label(colors_list_canvas, text="R").grid(row=0,column=R_INDEX)
+#tk.Label(colors_list_canvas, text="G").grid(row=0,column=G_INDEX)
+#tk.Label(colors_list_canvas, text="B").grid(row=0,column=B_INDEX)
 
 copy_button = tk.Button(tools_frame, text="Copy as CSV", command=copy_to_clipboard)
 copy_button.grid(row=3, column=0)
 
-id_entry_button = tk.Button(tools_frame, text="Set ID", command=ask_user_for_id)
+id_entry_button = tk.Button(tools_frame, text="Set ID", command=get_initial_id)
 id_entry_button.grid(row=4, column=0)
 
 delete_button = tk.Button(tools_frame, text="Clear entries", command=clear_colors)
 delete_button.grid(row=5, column=0)
+
+# load data from db
+get_data()
 
 root.mainloop()
