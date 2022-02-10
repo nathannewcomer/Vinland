@@ -6,7 +6,7 @@ import tkinter as tk
 import pyperclip as pc
 import sqlite3
 
-from tkinter import ttk, simpledialog, filedialog as fd
+from tkinter import END, ttk, simpledialog, filedialog as fd
 from PIL import Image, ImageTk, ImageGrab
 
 class AutoScrollbar(ttk.Scrollbar):
@@ -319,56 +319,51 @@ def copy_to_clipboard():
     csv = ""
 
     for key, value in colors_dictionary.items():
-        csv += "{0};{1};{2};{3};x;x;\n".format(value, key[0], key[1], key[2])
+        csv += "{0};{1};{2};{3};x;x;\n".format(key, value[0], value[1], value[2])
 
     pc.copy(csv)
 
 def clear_colors():
     answer = tk.messagebox.askquestion(title="Delete entries", message="Do you want to delete all entries?")
     if answer == "yes":
-    #    rows = colors_frame.grid_size()[1]
-    #    for row in range(1, rows):
-    #        remove_color(row)
-        for i in range(1, colors_list_canvas.grid_size()[1]):
-            for widget in colors_list_canvas.grid_slaves(row=i):
-                widget.destroy()
-
-    colors_dictionary.clear()
+        colors_dictionary.clear()
+        colors_listbox.delete(0, END)
+        print("Dictionary cleared")
+    
 
 def add_color(rgb, row):
     """Adds a color to the table and the dictionary"""
-    colors_dictionary[rgb] = row_index
+    colors_dictionary[row_index] = rgb
     line = "{0} - {1}, {2}, {3}".format(row_index, rgb[0], rgb[1], rgb[2])
     colors_listbox.insert(row_index, line)
 
-    #tk.Label(colors_list_frame, text=row_index).grid(row=row_index, column=ID_INDEX)
-    #tk.Label(colors_list_frame, text=rgb[0]).grid(row=row_index, column=R_INDEX)
-    #tk.Label(colors_list_frame, text=rgb[1]).grid(row=row_index, column=G_INDEX)
-    #tk.Label(colors_list_frame, text=rgb[2]).grid(row=row_index, column=B_INDEX)
-    #tk.Button(colors_list_frame, text="X", command=lambda: remove_color(row), bg="red").grid(row=row_index, column=X_INDEX)
-
 def remove_color(row):
-    """Removes a color from the table and the dictionary"""
-    # remove in dictionary
-    
-    rgb = get_color(row)
-    del colors_dictionary[rgb]
+    """Removes a color from the list and the dictionary"""
 
-    print(colors_dictionary)
+def split_line(line: str):
+    values = line.split("-, ")
+    _id = values[0]
+    r = values[1]
+    g = values[2]
+    b = values[3]
+    return (_id, r, g, b)
 
-    # remove from screen
-    widget_row = colors_list_canvas.grid_slaves(row=row)
-    for widget in widget_row:
-        widget.destroy()
+def change_display_color(e):
+    line = colors_listbox.get(colors_listbox.curselection())
+    _id = line.split(" ")[0]
+    _id = int(_id)
+    rgb = colors_dictionary[_id]
+    display_color(rgb)
 
-def get_color(row):
-    """Returns a color from the table with the given row"""
-    widget_row = colors_list_frame.grid_slaves(row=row)
-    widget_row.sort(key= lambda w: w.grid_info()["column"])
-    r = int(widget_row[1].cget("text"))
-    g =int(widget_row[2].cget("text"))
-    b = int(widget_row[3].cget("text"))
-    return (r, g, b)
+def save_to_db():
+    for key, value in colors_dictionary:
+        current_id = key
+        red = value[0]
+        green = value[1]
+        blue = value[2]
+        name = "X"
+        sql = "INSERT OR IGNORE INTO provinces VALUES (?, ?, ?, ?, ?)"
+        cursor.execute(sql, (current_id, red, green, blue, name))    
 
 def get_initial_id():
     global row_index
@@ -377,10 +372,6 @@ def get_initial_id():
     max_id = connection.execute(sql).fetchone()
     if isinstance(max_id[0], int):
         row_index = max_id[0] + 1
-
-def get_data():
-    sql = "SELECT * FROM provinces"
-    rows = connection.execute(sql)
 
 def on_closing():
     connection.close()
@@ -397,9 +388,6 @@ root.protocol("WM_DELETE_WINDOW", on_closing)
 # open sqlite connection
 connection = sqlite3.connect("ck3.db")
 cursor = connection.cursor()
-
-# pull data from table
-get_data()
 
 # tool frame
 tools_frame = tk.Frame(root)
@@ -423,13 +411,11 @@ color_canvas.grid(row=0, column=0)
 rgb_label = tk.Label(tools_frame, text="0 0 0")
 rgb_label.grid(row=1, column=0)
 
-# create table to hold/display rgb values
-#colors_container_canvas = tk.Canvas(tools_frame)
-#colors_container_canvas.grid(row=2, column=0)
-
 # canvas to hold list of colors
 colors_listbox = tk.Listbox(tools_frame, width=20)
 colors_listbox.grid(row=2, column=0)
+
+colors_listbox.bind("<<ListboxSelect>>", change_display_color)
 
 # constants for table insertion
 ID_INDEX = 0
@@ -443,10 +429,13 @@ colors_dictionary = {}
 copy_button = tk.Button(tools_frame, text="Copy as CSV", command=copy_to_clipboard)
 copy_button.grid(row=3, column=0)
 
-id_entry_button = tk.Button(tools_frame, text="Set ID", command=get_initial_id)
-id_entry_button.grid(row=4, column=0)
+#id_entry_button = tk.Button(tools_frame, text="Set ID", command=get_initial_id)
+#id_entry_button.grid(row=4, column=0)
 
 delete_button = tk.Button(tools_frame, text="Clear entries", command=clear_colors)
 delete_button.grid(row=5, column=0)
+
+db_button = tk.Button(tools_frame, text="Save to DB", command=save_to_db)
+db_button.grid(row=6, column=0)
 
 root.mainloop()
