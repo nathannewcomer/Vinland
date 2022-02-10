@@ -39,7 +39,7 @@ for line in file:
     green = int(values[2])
     blue = int(values[3])
     name = values[4]
-    sql = "INSERT INTO provinces VALUES (?, ?, ?, ?, ?)"
+    sql = "INSERT OR IGNORE INTO provinces VALUES (?, ?, ?, ?, ?)"
     cursor.execute(sql, (current_id, red, green, blue, name))
     print(f"Inserted {values}")
 
