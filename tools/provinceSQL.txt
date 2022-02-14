@@ -4,4 +4,12 @@ CREATE TABLE provinces (
   green INTEGER NOT NULL,
   blue INTEGER NOT NULL,
   name TEXT
-)
+);
+
+CREATE TABLE barony (
+  name TEXT PRIMARY KEY,
+  color INTEGER,
+  color2 INTEGER,
+  province INTEGER,
+  FOREIGN KEY(province) REFERENCES provinces(id)
+);
