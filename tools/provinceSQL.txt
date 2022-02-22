@@ -11,5 +11,42 @@ CREATE TABLE barony (
   color INTEGER,
   color2 INTEGER,
   province INTEGER,
+  county TEXT,
   FOREIGN KEY(province) REFERENCES provinces(id)
+);
+
+CREATE TABLE county (
+  name TEXT PRIMARY KEY,
+  color INTEGER,
+  color2 INTEGER,
+  duchy TEXT,
+  FOREIGN KEY(duchy) REFERENCES duchy(name)
+);
+
+CREATE TABLE duchy (
+  name TEXT PRIMARY KEY,
+  color INTEGER,
+  color2 INTEGER,
+  duchy TEXT,
+  capital TEXT,
+  FOREIGN KEY(capital) REFERENCES county(name)
+  FOREIGN KEY(kingdom) REFERENCES kingdom(name)
+);
+
+CREATE TABLE kingdom (
+  name TEXT PRIMARY KEY,
+  color INTEGER,
+  color2 INTEGER,
+  empire TEXT,
+  capital TEXT,
+  FOREIGN KEY(capital) REFERENCES county(name)
+  FOREIGN KEY(duchy) REFERENCES duchy(name)
+);
+
+CREATE TABLE empire (
+  name TEXT PRIMARY KEY,
+  color INTEGER,
+  color2 INTEGER,
+  capital TEXT,
+  FOREIGN KEY(capital) REFERENCES county(name)
 );
