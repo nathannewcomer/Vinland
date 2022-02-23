@@ -27,7 +27,7 @@ CREATE TABLE duchy (
   name TEXT PRIMARY KEY,
   color INTEGER,
   color2 INTEGER,
-  duchy TEXT,
+  kingdom TEXT,
   capital TEXT,
   FOREIGN KEY(capital) REFERENCES county(name)
   FOREIGN KEY(kingdom) REFERENCES kingdom(name)
@@ -40,7 +40,7 @@ CREATE TABLE kingdom (
   empire TEXT,
   capital TEXT,
   FOREIGN KEY(capital) REFERENCES county(name)
-  FOREIGN KEY(duchy) REFERENCES duchy(name)
+  FOREIGN KEY(empire) REFERENCES empire(name)
 );
 
 CREATE TABLE empire (
